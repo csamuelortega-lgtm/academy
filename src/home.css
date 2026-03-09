@@ -1,0 +1,362 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.landing {
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+  background-color: #f40009;
+  color: white;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.nav {
+  display: flex;
+  gap: 30px;
+}
+
+.nav a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  transition: opacity 0.3s;
+}
+
+.nav a:hover {
+  opacity: 0.8;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, #f40009 0%, #ff4444 100%);
+  color: white;
+  padding: 120px 50px;
+  text-align: center;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-content h1 {
+  font-size: 56px;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.hero-content p {
+  font-size: 24px;
+  margin-bottom: 30px;
+  opacity: 0.95;
+}
+
+.btn-primary {
+  background-color: white;
+  color: #f40009;
+  padding: 15px 40px;
+  font-size: 18px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Productos */
+.productos {
+  padding: 80px 50px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.productos h2 {
+  font-size: 42px;
+  margin-bottom: 50px;
+  color: #f40009;
+}
+
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.producto-card {
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.producto-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 30px rgba(244, 0, 9, 0.2);
+}
+
+.producto-card h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #f40009;
+}
+
+.producto-card p {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Historia */
+.historia {
+  padding: 80px 50px;
+  text-align: center;
+  background-color: white;
+}
+
+.historia h2 {
+  font-size: 42px;
+  margin-bottom: 30px;
+  color: #f40009;
+}
+
+.historia p {
+  font-size: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  color: #555;
+  line-height: 1.8;
+}
+
+/* Footer */
+.footer {
+  background-color: #222;
+  color: white;
+  text-align: center;
+  padding: 30px;
+  font-size: 14px;
+}
+
+/* Variaciones de hero para otras landings */
+.hero-sostenibilidad {
+  background: linear-gradient(135deg, #065f46 0%, #16a34a 100%);
+}
+
+.hero-experiencias {
+  background: radial-gradient(circle at top, #f97316, #b91c1c 60%, #7f1d1d 100%);
+}
+
+.btn-primary-light {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.btn-primary-dark {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Secciones genéricas complementarias */
+.section {
+  padding: 80px 50px;
+}
+
+.section h2 {
+  font-size: 36px;
+  margin-bottom: 32px;
+  color: #f40009;
+  text-align: center;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.card {
+  padding: 32px 28px;
+  border-radius: 18px;
+  background-color: #ffffff;
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.08);
+  text-align: left;
+}
+
+.card-soft {
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+  border: 1px solid #bbf7d0;
+}
+
+.card-outline {
+  border: 1px solid #e5e7eb;
+}
+
+.card-glow {
+  background: radial-gradient(circle at top left, rgba(248, 250, 252, 0.9), #ffffff);
+  border: 1px solid rgba(248, 250, 252, 0.8);
+  box-shadow: 0 12px 35px rgba(248, 113, 113, 0.25);
+}
+
+.card h3 {
+  font-size: 22px;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+.card p {
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.section-planeta {
+  background-color: #f0fdf4;
+}
+
+.section-comunidad {
+  background-color: #ffffff;
+}
+
+.section-compromisos {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stat {
+  min-width: 180px;
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.section-eventos {
+  background-color: #fff7ed;
+}
+
+.section-musica {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.section-momentos {
+  background-color: #f9fafb;
+}
+
+.timeline {
+  max-width: 800px;
+  margin: 0 auto;
+  border-left: 2px solid rgba(148, 163, 184, 0.6);
+  padding-left: 24px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -33px;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #f97316;
+  border: 2px solid #0f172a;
+}
+
+.timeline-content h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.timeline-content p {
+  font-size: 15px;
+  color: #cbd5f5;
+}
+
+.center-text {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 32px;
+  color: #4b5563;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background-color: #111827;
+  color: #f9fafb;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .hero-content h1 {
+    font-size: 36px;
+  }
+
+  .hero-content p {
+    font-size: 18px;
+  }
+
+  .productos h2,
+  .historia h2 {
+    font-size: 32px;
+  }
+
+  .productos-grid {
+    grid-template-columns: 1fr;
+  }
+}
