@@ -12,6 +12,7 @@ import Editor from './editor'
 import Home from './home'
 import HomeSostenibilidad from './HomeSostenibilidad'
 import HomeExperiencias from './HomeExperiencias'
+import MixMastersDrinks from './MixMastersDrinks'
 
 import Test from './editor/test/001/index.jsx'
 
@@ -31,6 +32,7 @@ const Layout = () => {
               <Route path="/home" element={<Home />} />
               <Route path="/home-sostenibilidad" element={<HomeSostenibilidad />} />
               <Route path="/home-experiencias" element={<HomeExperiencias />} />
+              <Route path="/mixmastersdrinks/*" element={<MixMastersDrinks />} />
               <Route path="/test/*" element={<Test />} />
             </Routes>
           </BrowserRouter>
