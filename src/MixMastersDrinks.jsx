@@ -1,8 +1,38 @@
 import React, { useState } from 'react';
+import { useAuth } from './auth';
 
 export default function MixMastersDrinks() {
   const [authTab, setAuthTab] = useState('login');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const { user, isAuthenticated, loading, login, logout } = useAuth();
+
+  const displayName = user?.name || user?.username || user?.email || 'Usuario';
+  const userRole = user?.role || 'usuario';
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSubmitting(true);
+
+    try {
+      await login({ identifier, password });
+      setIdentifier('');
+      setPassword('');
+    } catch (loginError) {
+      setError(loginError.message || 'No se pudo iniciar sesión');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const BrandLogo = ({ size = 'md' }) => (
     <span
@@ -37,15 +67,24 @@ export default function MixMastersDrinks() {
           <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-300">
             <a href="#como-funciona" className="hover:text-orange-400 transition-colors">Cómo funciona</a>
             <a href="#beneficios" className="hover:text-lime-400 transition-colors">Beneficios</a>
-            <a href="#auth" className="hover:text-emerald-400 transition-colors">Acceder</a>
+            <a href="#auth" className="hover:text-emerald-400 transition-colors">{isAuthenticated ? 'Mi espacio' : 'Acceder'}</a>
           </nav>
 
-          <a
-            href="#auth"
-            className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 text-sm font-extrabold px-5 py-2 rounded-full hover:brightness-110 transition-all shadow-lg shadow-black/20"
-          >
-            Empieza gratis
-          </a>
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-zinc-200 to-zinc-400 text-zinc-950 text-sm font-extrabold px-5 py-2 rounded-full hover:brightness-110 transition-all shadow-lg shadow-black/20"
+            >
+              Cerrar sesión
+            </button>
+          ) : (
+            <a
+              href="#auth"
+              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 text-sm font-extrabold px-5 py-2 rounded-full hover:brightness-110 transition-all shadow-lg shadow-black/20"
+            >
+              Empieza gratis
+            </a>
+          )}
 
           {/* Mobile menu button */}
           <button
@@ -67,14 +106,26 @@ export default function MixMastersDrinks() {
           <nav className="md:hidden px-6 pb-4 flex flex-col gap-4 text-sm text-zinc-300 border-t border-zinc-800">
             <a href="#como-funciona" onClick={() => setMenuOpen(false)} className="hover:text-orange-400">Cómo funciona</a>
             <a href="#beneficios" onClick={() => setMenuOpen(false)} className="hover:text-lime-400">Beneficios</a>
-            <a href="#auth" onClick={() => setMenuOpen(false)} className="hover:text-emerald-400">Acceder</a>
-            <a
-              href="#auth"
-              onClick={() => setMenuOpen(false)}
-              className="bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold px-4 py-2 rounded-full text-center hover:brightness-110 transition-all"
-            >
-              Empieza gratis
-            </a>
+            <a href="#auth" onClick={() => setMenuOpen(false)} className="hover:text-emerald-400">{isAuthenticated ? 'Mi espacio' : 'Acceder'}</a>
+            {isAuthenticated ? (
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="bg-gradient-to-r from-zinc-200 to-zinc-400 text-zinc-950 font-extrabold px-4 py-2 rounded-full text-center hover:brightness-110 transition-all"
+              >
+                Cerrar sesión
+              </button>
+            ) : (
+              <a
+                href="#auth"
+                onClick={() => setMenuOpen(false)}
+                className="bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold px-4 py-2 rounded-full text-center hover:brightness-110 transition-all"
+              >
+                Empieza gratis
+              </a>
+            )}
           </nav>
         )}
       </header>
@@ -292,7 +343,7 @@ export default function MixMastersDrinks() {
         </div>
       </section>
 
-      {/* ─────────────────────────── LOGIN / REGISTER ─────────────────────── */}
+      {/* ─────────────────────────── LOGIN / USER SPACE ─────────────────────── */}
       <section id="auth" className="py-24 px-6 bg-zinc-900">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
@@ -300,142 +351,108 @@ export default function MixMastersDrinks() {
             <div className="mt-2 mb-1 flex items-center justify-center">
               <BrandLogo size="lg" />
             </div>
-            <p className="text-zinc-400 text-sm">Tu plataforma de mixología</p>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex bg-zinc-800 rounded-xl p-1 mb-8">
-            <button
-              onClick={() => setAuthTab('login')}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                authTab === 'login'
-                  ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Iniciar sesión
-            </button>
-            <button
-              onClick={() => setAuthTab('register')}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                authTab === 'register'
-                  ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Registrarse
-            </button>
+            <p className="text-zinc-400 text-sm">{isAuthenticated ? 'Tu sesión está activa' : 'Tu plataforma de mixología'}</p>
           </div>
 
           <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-8">
-            {authTab === 'login' ? (
-              <form onSubmit={e => e.preventDefault()} className="flex flex-col gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Correo electrónico</label>
-                  <input
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
-                  />
+            {loading ? (
+              <div className="text-center text-zinc-300 py-6">Comprobando sesión...</div>
+            ) : isAuthenticated ? (
+              <div className="flex flex-col gap-4 text-zinc-200">
+                <div className="rounded-xl border border-zinc-600 bg-zinc-900 px-4 py-3">
+                  <p className="text-sm text-zinc-400">Usuario conectado</p>
+                  <p className="font-semibold text-white">{displayName}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Contraseña</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
-                  />
+                <div className="rounded-xl border border-zinc-600 bg-zinc-900 px-4 py-3">
+                  <p className="text-sm text-zinc-400">Rol</p>
+                  <p className="font-semibold text-white">{userRole}</p>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 text-zinc-400 cursor-pointer">
-                    <input type="checkbox" className="accent-lime-400" />
-                    Recordarme
-                  </label>
-                  <button type="button" className="text-lime-400 hover:underline">
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold py-3 rounded-xl hover:brightness-110 transition-all"
-                >
-                  Entrar
-                </button>
-                <div className="relative my-1">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-zinc-700" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-zinc-800 px-3 text-xs text-zinc-500">o continúa con</span>
-                  </div>
+                <div className="rounded-xl border border-zinc-600 bg-zinc-900 px-4 py-3">
+                  <p className="text-sm text-zinc-400">Base de datos</p>
+                  <p className="font-semibold text-white">{user?.database || 'clientes'}</p>
                 </div>
                 <button
                   type="button"
-                  className="w-full border border-zinc-600 text-zinc-300 font-medium py-3 rounded-xl hover:border-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+                  onClick={handleLogout}
+                  className="w-full bg-gradient-to-r from-zinc-200 to-zinc-400 text-zinc-950 font-extrabold py-3 rounded-xl hover:brightness-110 transition-all"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z"/>
-                    <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2970244 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z"/>
-                    <path fill="#4A90E2" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z"/>
-                    <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z"/>
-                  </svg>
-                  Continuar con Google
+                  Cerrar sesión
                 </button>
-              </form>
+                <a
+                  href="/editor"
+                  className="w-full text-center border border-zinc-500 text-zinc-100 font-semibold py-3 rounded-xl hover:border-zinc-300 transition-all"
+                >
+                  Ir al editor
+                </a>
+              </div>
             ) : (
-              <form onSubmit={e => e.preventDefault()} className="flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nombre</label>
-                    <input
-                      type="text"
-                      placeholder="Carlos"
-                      className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Apellido</label>
-                    <input
-                      type="text"
-                      placeholder="García"
-                      className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
-                    />
-                  </div>
-                </div>
+              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Correo electrónico</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Correo o usuario</label>
                   <input
-                    type="email"
-                    placeholder="tu@email.com"
+                    type="text"
+                    value={identifier}
+                    onChange={(event) => setIdentifier(event.target.value)}
+                    placeholder="usuario@correo.com"
                     className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-1.5">Contraseña</label>
                   <input
                     type="password"
-                    placeholder="Mín. 8 caracteres"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="••••••••"
                     className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
+                    required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Confirmar contraseña</label>
-                  <input
-                    type="password"
-                    placeholder="Repite tu contraseña"
-                    className="w-full bg-zinc-900 border border-zinc-600 text-white rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none focus:border-orange-400 transition-colors"
-                  />
-                </div>
-                <label className="flex items-start gap-2 text-sm text-zinc-400 cursor-pointer">
-                  <input type="checkbox" className="accent-lime-400 mt-0.5 shrink-0" />
-                  Acepto los <button type="button" className="text-lime-400 hover:underline">términos y condiciones</button> y la <button type="button" className="text-lime-400 hover:underline">política de privacidad</button>
-                </label>
+
+                {error ? (
+                  <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    {error}
+                  </div>
+                ) : null}
+
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold py-3 rounded-xl hover:brightness-110 transition-all"
                 >
-                  Crear cuenta
+                  {submitting ? 'Entrando...' : 'Iniciar sesión'}
                 </button>
+
+                <div className="flex bg-zinc-900 rounded-xl p-1 border border-zinc-700">
+                  <button
+                    type="button"
+                    onClick={() => setAuthTab('login')}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      authTab === 'login'
+                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    Login activo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthTab('register')}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      authTab === 'register'
+                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    Sin registro
+                  </button>
+                </div>
+                {authTab === 'register' ? (
+                  <p className="text-sm text-zinc-400 text-center">
+                    En este flujo solo se habilito login con CouchDB sobre la base <strong className="text-zinc-200">clientes</strong>.
+                  </p>
+                ) : null}
               </form>
             )}
           </div>

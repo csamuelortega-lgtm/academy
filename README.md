@@ -16,8 +16,10 @@ Este proyecto combina un **frontend en React** con un **servidor Express** senci
   - Punto de entrada de React.
   - Crea el `root` y configura `react-router-dom`.
   - Rutas:
-    - `/` → `Editor` (layout de editor + preview).
+    - `/` → layout de editor + preview.
+    - `/editor` → layout de editor + preview (protegido por sesión).
     - `/home` → `Home` (landing).
+    - `/mixmastersdrinks` → landing principal con login integrado.
     - `/test/*` → test de ejemplo (`src/editor/test/001/index.jsx`).
     - `/simple` → `SimplePage` (página de botones).
 
@@ -89,4 +91,17 @@ La idea es que el editor cargue y modifique estos archivos para que el `iframe` 
    - Envía cambios al backend con `PUT /api/test`.
 4. El `iframe`:
    - Muestra `/test/001`, que consume los archivos modificados.
+
+## Autenticación
+
+- `index.js` expone:
+  - `POST /api/auth/login`
+  - `GET /api/auth/me`
+  - `POST /api/auth/logout`
+- El login se renderiza dentro de `src/MixMastersDrinks.jsx` en la sección `#auth`.
+- La consulta de usuarios usa CouchDB con estas variables opcionales:
+  - `COUCHDB_URL`
+  - `COUCHDB_DB`, `COUCHDB_DATABASE` o `COUCHDB_USERS_DB` (por defecto: `clientes`)
+  - `COUCHDB_USERNAME` y `COUCHDB_PASSWORD`
+- El frontend guarda la sesión en `localStorage` con la clave `git-academy-auth`.
 

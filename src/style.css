@@ -8,4 +8,19 @@
 
 body {
     margin: 0;
+    font-family: 'Trebuchet MS', 'Lucida Grande', 'Segoe UI', sans-serif;
+    background: #050816;
+    color: #f4f7fb;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
   }
