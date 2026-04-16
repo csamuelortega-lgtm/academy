@@ -21,7 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 const sessionStore = new Map();
 
 const getCouchDbBaseUrl = () => (process.env.COUCHDB_URL || 'http://127.0.0.1:5984').replace(/\/$/, '');
-const getCouchDbDatabase = () => process.env.COUCHDB_DB || process.env.COUCHDB_DATABASE || process.env.COUCHDB_USERS_DB || 'clientes';
+const getUsersDbName = () => process.env.COUCHDB_USERS_DB || process.env.COUCHDB_DB || process.env.COUCHDB_DATABASE || 'clientes';
+const getMixesDbName = () => process.env.COUCHDB_MIXES_DB || 'mixes';
 const getCouchDbAuthHeader = () => {
   const username = process.env.COUCHDB_USERNAME || process.env.COUCHDB_USER;
   const password = process.env.COUCHDB_PASSWORD || process.env.COUCHDB_PASS;
@@ -50,16 +51,17 @@ const sanitizeUser = (document) => ({
   id: document._id || document.id || null,
   name: document.name || document.fullName || document.nombre || '',
   email: document.email || document.mail || '',
+  login: document.login || document.username || document.usuario || '',
   username: document.username || document.usuario || '',
   role: document.role || document.rol || document.type || 'usuario',
-  database: getCouchDbDatabase(),
+  database: getUsersDbName(),
 });
 
 async function findUserDocument(identifier) {
   const rawIdentifier = String(identifier || '').trim();
   const normalizedIdentifier = normalizeIdentifier(identifier);
   const databaseUrl = getCouchDbBaseUrl();
-  const databaseName = getCouchDbDatabase();
+  const databaseName = getUsersDbName();
 
   const response = await fetch(`${databaseUrl}/${encodeURIComponent(databaseName)}/_find`, {
     method: 'POST',
@@ -70,6 +72,7 @@ async function findUserDocument(identifier) {
     body: JSON.stringify({
       selector: {
         $or: [
+          { login: { $in: [rawIdentifier, normalizedIdentifier] } },
           { email: { $in: [rawIdentifier, normalizedIdentifier] } },
           { mail: { $in: [rawIdentifier, normalizedIdentifier] } },
           { username: { $in: [rawIdentifier, normalizedIdentifier] } },
@@ -122,7 +125,7 @@ const getSessionOwnerKey = (request) => (
 const sanitizeMix = (document) => ({
   id: document._id,
   rev: document._rev,
-  collection: document.collection || 'mezclas',
+  collection: document.collection || 'mixes',
   recipeName: document.recipeName || '',
   notes: document.notes || '',
   percentages: {
@@ -188,8 +191,8 @@ const normalizeFlavors = (flavors) => {
   return normalized;
 };
 
-async function couchDbRequest(endpoint, options = {}) {
-  const response = await fetch(`${getCouchDbBaseUrl()}/${encodeURI(getCouchDbDatabase())}${endpoint}`, {
+async function couchDbRequest(databaseName, endpoint, options = {}) {
+  const response = await fetch(`${getCouchDbBaseUrl()}/${encodeURI(databaseName)}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -289,12 +292,13 @@ app.post('/api/test/', async (req, res) => {
           return;
         }
 
-        const result = await couchDbRequest('/_find', {
+        const mixesDbName = getMixesDbName();
+        const result = await couchDbRequest(mixesDbName, '/_find', {
           method: 'POST',
           body: JSON.stringify({
             selector: {
-              type: 'mezcla',
-              collection: 'mezclas',
+              type: 'mix',
+              collection: 'mixes',
               ownerKey,
             },
             limit: 200,
@@ -330,8 +334,8 @@ app.post('/api/test/', async (req, res) => {
         const now = new Date().toISOString();
 
         const payload = {
-          type: 'mezcla',
-          collection: 'mezclas',
+          type: 'mix',
+          collection: 'mixes',
           ownerKey,
           ownerId: req.session?.user?.id || '',
           ownerEmail: req.session?.user?.email || '',
@@ -348,7 +352,8 @@ app.post('/api/test/', async (req, res) => {
           updatedAt: now,
         };
 
-        const createResult = await couchDbRequest('', {
+        const mixesDbName = getMixesDbName();
+        const createResult = await couchDbRequest(mixesDbName, '', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
@@ -393,9 +398,10 @@ app.post('/api/test/', async (req, res) => {
           return;
         }
 
-        const existing = await couchDbRequest(`/${encodeURIComponent(mixId)}`, { method: 'GET' });
+        const mixesDbName = getMixesDbName();
+        const existing = await couchDbRequest(mixesDbName, `/${encodeURIComponent(mixId)}`, { method: 'GET' });
 
-        if (existing.type !== 'mezcla' || existing.collection !== 'mezclas' || existing.ownerKey !== ownerKey) {
+        if (existing.type !== 'mix' || existing.collection !== 'mixes' || existing.ownerKey !== ownerKey) {
           res.status(403).json({ message: 'No tienes permisos para editar esta mezcla' });
           return;
         }
@@ -419,7 +425,7 @@ app.post('/api/test/', async (req, res) => {
           updatedAt: new Date().toISOString(),
         };
 
-        const updateResult = await couchDbRequest(`/${encodeURIComponent(mixId)}`, {
+        const updateResult = await couchDbRequest(mixesDbName, `/${encodeURIComponent(mixId)}`, {
           method: 'PUT',
           body: JSON.stringify(nextPayload),
         });

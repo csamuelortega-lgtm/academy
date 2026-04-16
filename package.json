@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "start": "concurrently \"craco start\" \"nodemon index\""
+        "start": "concurrently \"craco start\" \"nodemon index\"",
+        "init:couchdb": "powershell -ExecutionPolicy Bypass -File ./scripts/init-couchdb.ps1"
     },
     "dependencies": {
         "@craco/craco": "^7.1.0",

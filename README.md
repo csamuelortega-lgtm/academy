@@ -99,9 +99,17 @@ La idea es que el editor cargue y modifique estos archivos para que el `iframe` 
   - `GET /api/auth/me`
   - `POST /api/auth/logout`
 - El login se renderiza dentro de `src/MixMastersDrinks.jsx` en la sección `#auth`.
-- La consulta de usuarios usa CouchDB con estas variables opcionales:
+- La consulta de usuarios usa la base `clientes` y las mezclas se guardan en la base `mixes`.
+- Variables opcionales de CouchDB:
   - `COUCHDB_URL`
-  - `COUCHDB_DB`, `COUCHDB_DATABASE` o `COUCHDB_USERS_DB` (por defecto: `clientes`)
+  - `COUCHDB_USERS_DB` (por defecto: `clientes`)
+  - `COUCHDB_MIXES_DB` (por defecto: `mixes`)
   - `COUCHDB_USERNAME` y `COUCHDB_PASSWORD`
 - El frontend guarda la sesión en `localStorage` con la clave `git-academy-auth`.
+
+## Inicialización de CouchDB
+
+- Ejecuta este comando para crear/verificar `clientes` y `mixes`, y crear/actualizar el usuario de login `admin` con contraseña `1234` en `clientes`:
+  - `npm run init:couchdb`
+- Script: `scripts/init-couchdb.ps1`
 
