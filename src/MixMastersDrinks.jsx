@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from './auth';
 
 export default function MixMastersDrinks() {
-  const [authTab, setAuthTab] = useState('login');
   const [menuOpen, setMenuOpen] = useState(false);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -423,36 +422,6 @@ export default function MixMastersDrinks() {
                 >
                   {submitting ? 'Entrando...' : 'Iniciar sesión'}
                 </button>
-
-                <div className="flex bg-zinc-900 rounded-xl p-1 border border-zinc-700">
-                  <button
-                    type="button"
-                    onClick={() => setAuthTab('login')}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                      authTab === 'login'
-                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
-                        : 'text-zinc-400'
-                    }`}
-                  >
-                    Login activo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAuthTab('register')}
-                    className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                      authTab === 'register'
-                        ? 'bg-gradient-to-r from-orange-500 via-red-500 to-lime-500 text-zinc-950 font-extrabold'
-                        : 'text-zinc-400'
-                    }`}
-                  >
-                    Sin registro
-                  </button>
-                </div>
-                {authTab === 'register' ? (
-                  <p className="text-sm text-zinc-400 text-center">
-                    En este flujo solo se habilito login con CouchDB sobre la base <strong className="text-zinc-200">clientes</strong>.
-                  </p>
-                ) : null}
               </form>
             )}
           </div>
