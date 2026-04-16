@@ -13,6 +13,7 @@ import Home from './home'
 import HomeSostenibilidad from './HomeSostenibilidad'
 import HomeExperiencias from './HomeExperiencias'
 import MixMastersDrinks from './MixMastersDrinks'
+import MixesPage from './MixesPage'
 import { AuthProvider, useAuth } from './auth'
 
 import Test from './editor/test/001/index.jsx'
@@ -59,6 +60,14 @@ const Layout = () => {
             element={
               <ProtectedRoute>
                 <Editor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mixes"
+            element={
+              <ProtectedRoute>
+                <MixesPage />
               </ProtectedRoute>
             }
           />

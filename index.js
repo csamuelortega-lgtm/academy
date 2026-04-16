@@ -282,7 +282,6 @@ app.post('/api/test/', async (req, res) => {
               type: 'mix',
               ownerKey,
             },
-            sort: [{ updatedAt: 'desc' }],
             limit: 200,
           }),
         });

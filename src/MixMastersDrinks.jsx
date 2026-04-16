@@ -379,10 +379,10 @@ export default function MixMastersDrinks() {
                   Cerrar sesión
                 </button>
                 <a
-                  href="/editor"
+                  href="/mixes"
                   className="w-full text-center border border-zinc-500 text-zinc-100 font-semibold py-3 rounded-xl hover:border-zinc-300 transition-all"
                 >
-                  Ir al editor
+                  Ir al editor de mezclas
                 </a>
               </div>
             ) : (

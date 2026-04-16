@@ -62,27 +62,26 @@ export default function MixesPage() {
 
   const totalMl = useMemo(() => rows.reduce((acc, item) => acc + (Number(item.ml) || 0), 0), [rows]);
 
-  const loadMixes = async () => {
-    if (!session?.token) {
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const payload = await requestJson('/api/mixes', { method: 'GET' }, session.token);
-      setMixes((payload.mixes || []).sort(sortByRecent));
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadMixes = async () => {
+      if (!session?.token) {
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+
+      try {
+        const payload = await requestJson('/api/mixes', { method: 'GET' }, session.token);
+        setMixes((payload.mixes || []).sort(sortByRecent));
+      } catch (requestError) {
+        setError(requestError.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadMixes();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.token]);
 
   const resetForm = () => {
