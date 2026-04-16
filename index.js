@@ -122,54 +122,68 @@ const getSessionOwnerKey = (request) => (
 const sanitizeMix = (document) => ({
   id: document._id,
   rev: document._rev,
+  collection: document.collection || 'mezclas',
   recipeName: document.recipeName || '',
   notes: document.notes || '',
-  drinks: Array.isArray(document.drinks) ? document.drinks : [],
-  totalMl: Number(document.totalMl || 0),
+  percentages: {
+    cocacola: Number(document.percentages?.cocacola || 0),
+    fanta: Number(document.percentages?.fanta || 0),
+    sprite: Number(document.percentages?.sprite || 0),
+  },
+  flavors: {
+    cocacola: document.flavors?.cocacola || '',
+    fanta: document.flavors?.fanta || '',
+    sprite: document.flavors?.sprite || '',
+  },
+  totalPercentage: Number(document.totalPercentage || 0),
   createdAt: document.createdAt || null,
   updatedAt: document.updatedAt || null,
 });
 
-const isAllowedDrink = (value) => ['coca-cola', 'fanta', 'sprite'].includes(value);
-
 const flavorCatalog = {
-  'coca-cola': ['Vainilla', 'Cereza', 'Lima', 'Canela'],
+  cocacola: ['Vainilla', 'Cereza', 'Lima', 'Canela'],
   fanta: ['Naranja intensa', 'Uva', 'Pina', 'Durazno'],
   sprite: ['Limon', 'Hierbabuena', 'Pepino', 'Jengibre'],
 };
 
-const normalizeDrinks = (drinks) => {
-  if (!Array.isArray(drinks)) {
-    throw new Error('La lista de refrescos no es valida');
-  }
+const normalizePercentages = (percentages) => {
+  const cocacola = Number(percentages?.cocacola);
+  const fanta = Number(percentages?.fanta);
+  const sprite = Number(percentages?.sprite);
 
-  const normalized = drinks.map((item) => {
-    const drink = String(item?.drink || '').trim().toLowerCase();
-    const flavor = String(item?.flavor || '').trim();
-    const ml = Number(item?.ml);
+  const values = { cocacola, fanta, sprite };
 
-    if (!isAllowedDrink(drink)) {
-      throw new Error('Refresco no permitido');
+  Object.entries(values).forEach(([key, value]) => {
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      throw new Error(`Porcentaje invalido para ${key}`);
     }
-
-    if (!flavorCatalog[drink].includes(flavor)) {
-      throw new Error('Saborizante no permitido para el refresco seleccionado');
-    }
-
-    if (!Number.isFinite(ml) || ml <= 0) {
-      throw new Error('Cantidad invalida en ml');
-    }
-
-    return {
-      drink,
-      flavor,
-      ml: Math.round(ml * 100) / 100,
-    };
   });
 
-  if (normalized.length === 0) {
-    throw new Error('Debes agregar al menos un refresco a la mezcla');
+  const total = cocacola + fanta + sprite;
+  if (Math.abs(total - 100) > 0.0001) {
+    throw new Error('La suma de Coca-Cola, Fanta y Sprite debe ser 100%');
   }
+
+  return {
+    cocacola: Math.round(cocacola * 100) / 100,
+    fanta: Math.round(fanta * 100) / 100,
+    sprite: Math.round(sprite * 100) / 100,
+    total: Math.round(total * 100) / 100,
+  };
+};
+
+const normalizeFlavors = (flavors) => {
+  const normalized = {
+    cocacola: String(flavors?.cocacola || '').trim(),
+    fanta: String(flavors?.fanta || '').trim(),
+    sprite: String(flavors?.sprite || '').trim(),
+  };
+
+  Object.keys(flavorCatalog).forEach((drinkKey) => {
+    if (!flavorCatalog[drinkKey].includes(normalized[drinkKey])) {
+      throw new Error(`Saborizante no permitido para ${drinkKey}`);
+    }
+  });
 
   return normalized;
 };
@@ -279,7 +293,8 @@ app.post('/api/test/', async (req, res) => {
           method: 'POST',
           body: JSON.stringify({
             selector: {
-              type: 'mix',
+              type: 'mezcla',
+              collection: 'mezclas',
               ownerKey,
             },
             limit: 200,
@@ -299,7 +314,8 @@ app.post('/api/test/', async (req, res) => {
         const ownerKey = getSessionOwnerKey(req);
         const recipeName = String(req.body?.recipeName || '').trim();
         const notes = String(req.body?.notes || '').trim();
-        const drinks = normalizeDrinks(req.body?.drinks);
+        const percentages = normalizePercentages(req.body?.percentages);
+        const flavors = normalizeFlavors(req.body?.flavors);
 
         if (!ownerKey) {
           res.status(400).json({ message: 'No se pudo identificar el usuario actual' });
@@ -312,16 +328,22 @@ app.post('/api/test/', async (req, res) => {
         }
 
         const now = new Date().toISOString();
-        const totalMl = drinks.reduce((acc, item) => acc + item.ml, 0);
 
         const payload = {
-          type: 'mix',
+          type: 'mezcla',
+          collection: 'mezclas',
           ownerKey,
+          ownerId: req.session?.user?.id || '',
           ownerEmail: req.session?.user?.email || '',
           recipeName,
           notes,
-          drinks,
-          totalMl,
+          percentages: {
+            cocacola: percentages.cocacola,
+            fanta: percentages.fanta,
+            sprite: percentages.sprite,
+          },
+          flavors,
+          totalPercentage: percentages.total,
           createdAt: now,
           updatedAt: now,
         };
@@ -353,7 +375,8 @@ app.post('/api/test/', async (req, res) => {
         const revision = String(req.body?.rev || '').trim();
         const recipeName = String(req.body?.recipeName || '').trim();
         const notes = String(req.body?.notes || '').trim();
-        const drinks = normalizeDrinks(req.body?.drinks);
+        const percentages = normalizePercentages(req.body?.percentages);
+        const flavors = normalizeFlavors(req.body?.flavors);
 
         if (!ownerKey) {
           res.status(400).json({ message: 'No se pudo identificar el usuario actual' });
@@ -372,7 +395,7 @@ app.post('/api/test/', async (req, res) => {
 
         const existing = await couchDbRequest(`/${encodeURIComponent(mixId)}`, { method: 'GET' });
 
-        if (existing.type !== 'mix' || existing.ownerKey !== ownerKey) {
+        if (existing.type !== 'mezcla' || existing.collection !== 'mezclas' || existing.ownerKey !== ownerKey) {
           res.status(403).json({ message: 'No tienes permisos para editar esta mezcla' });
           return;
         }
@@ -382,14 +405,17 @@ app.post('/api/test/', async (req, res) => {
           return;
         }
 
-        const totalMl = drinks.reduce((acc, item) => acc + item.ml, 0);
-
         const nextPayload = {
           ...existing,
           recipeName,
           notes,
-          drinks,
-          totalMl,
+          percentages: {
+            cocacola: percentages.cocacola,
+            fanta: percentages.fanta,
+            sprite: percentages.sprite,
+          },
+          flavors,
+          totalPercentage: percentages.total,
           updatedAt: new Date().toISOString(),
         };
 

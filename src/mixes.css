@@ -103,23 +103,32 @@
   color: #eff5ff;
 }
 
-.mixes-rows {
+.mixes-sliders {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
-.mixes-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 100px auto;
-  gap: 8px;
+.mix-slider {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.55);
 }
 
-.mixes-row button {
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #eff5ff;
-  padding: 0 10px;
+.mix-slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mix-slider input[type='range'] {
+  width: 100%;
+  margin: 6px 0 10px;
+}
+
+.mix-slider label {
+  margin: 0;
 }
 
 .mixes-actions-row {
@@ -166,6 +175,35 @@
   border: 1px solid rgba(96, 165, 250, 0.5);
   background: rgba(96, 165, 250, 0.15);
   color: #bfdbfe;
+}
+
+.mixes-qr-box {
+  margin-top: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.mixes-qr-box h3 {
+  margin: 0;
+}
+
+.mixes-qr-box img {
+  width: min(320px, 100%);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.mixes-qr-box p {
+  margin: 0;
+  color: rgba(239, 245, 255, 0.7);
+  font-size: 13px;
+  text-align: center;
 }
 
 .mixes-muted {
@@ -248,10 +286,6 @@
 @media (max-width: 720px) {
   .mixes-page {
     padding: 16px;
-  }
-
-  .mixes-row {
-    grid-template-columns: 1fr;
   }
 
   .mixes-actions-row {

@@ -17,6 +17,7 @@
         "nodemailer": "^6.9.8",
         "nodemon": "^3.0.2",
         "onsenui": "^2.12.8",
+        "qrcode": "^1.5.4",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-i18next": "^14.0.0",

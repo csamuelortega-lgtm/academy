@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import QRCode from 'qrcode';
 
 import { useAuth } from './auth';
 import './mixes.css';
@@ -7,24 +8,52 @@ import './mixes.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002';
 
 const flavorCatalog = {
-  'coca-cola': ['Vainilla', 'Cereza', 'Lima', 'Canela'],
+  cocacola: ['Vainilla', 'Cereza', 'Lima', 'Canela'],
   fanta: ['Naranja intensa', 'Uva', 'Pina', 'Durazno'],
   sprite: ['Limon', 'Hierbabuena', 'Pepino', 'Jengibre'],
 };
 
 const drinkLabels = {
-  'coca-cola': 'Coca-Cola',
+  cocacola: 'Coca-Cola',
   fanta: 'Fanta',
   sprite: 'Sprite',
 };
 
-const createEmptyRow = () => ({
-  drink: 'coca-cola',
-  flavor: flavorCatalog['coca-cola'][0],
-  ml: 150,
-});
-
 const sortByRecent = (a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
+
+const drinkKeys = ['cocacola', 'fanta', 'sprite'];
+
+const clampPercentage = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+};
+
+const rebalancePercentages = (current, changedKey, changedValue) => {
+  const nextValue = clampPercentage(changedValue);
+  const otherKeys = drinkKeys.filter((key) => key !== changedKey);
+  const remaining = 100 - nextValue;
+
+  const currentOtherTotal = otherKeys.reduce((acc, key) => acc + Number(current[key] || 0), 0);
+
+  let firstOtherValue;
+  if (currentOtherTotal === 0) {
+    firstOtherValue = Math.round(remaining / 2);
+  } else {
+    firstOtherValue = Math.round((remaining * Number(current[otherKeys[0]] || 0)) / currentOtherTotal);
+  }
+
+  const secondOtherValue = remaining - firstOtherValue;
+
+  return {
+    ...current,
+    [changedKey]: nextValue,
+    [otherKeys[0]]: firstOtherValue,
+    [otherKeys[1]]: secondOtherValue,
+  };
+};
 
 const requestJson = async (path, options = {}, token) => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -54,13 +83,24 @@ export default function MixesPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [recipeName, setRecipeName] = useState('');
   const [notes, setNotes] = useState('');
-  const [rows, setRows] = useState([createEmptyRow()]);
+  const [percentages, setPercentages] = useState({ cocacola: 34, fanta: 33, sprite: 33 });
+  const [flavors, setFlavors] = useState({
+    cocacola: flavorCatalog.cocacola[0],
+    fanta: flavorCatalog.fanta[0],
+    sprite: flavorCatalog.sprite[0],
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [qrImage, setQrImage] = useState('');
+  const [qrOpen, setQrOpen] = useState(false);
 
-  const totalMl = useMemo(() => rows.reduce((acc, item) => acc + (Number(item.ml) || 0), 0), [rows]);
+  const totalPercentage = useMemo(() => (
+    Number(percentages.cocacola || 0)
+    + Number(percentages.fanta || 0)
+    + Number(percentages.sprite || 0)
+  ), [percentages]);
 
   useEffect(() => {
     const loadMixes = async () => {
@@ -88,7 +128,14 @@ export default function MixesPage() {
     setSelectedId(null);
     setRecipeName('');
     setNotes('');
-    setRows([createEmptyRow()]);
+    setPercentages({ cocacola: 34, fanta: 33, sprite: 33 });
+    setFlavors({
+      cocacola: flavorCatalog.cocacola[0],
+      fanta: flavorCatalog.fanta[0],
+      sprite: flavorCatalog.sprite[0],
+    });
+    setQrImage('');
+    setQrOpen(false);
     setInfo('Formulario reiniciado para una nueva mezcla.');
     setError('');
   };
@@ -97,46 +144,66 @@ export default function MixesPage() {
     setSelectedId(mix.id);
     setRecipeName(mix.recipeName || '');
     setNotes(mix.notes || '');
-    setRows(Array.isArray(mix.drinks) && mix.drinks.length > 0 ? mix.drinks : [createEmptyRow()]);
+    setPercentages({
+      cocacola: Number(mix.percentages?.cocacola || 0),
+      fanta: Number(mix.percentages?.fanta || 0),
+      sprite: Number(mix.percentages?.sprite || 0),
+    });
+    setFlavors({
+      cocacola: mix.flavors?.cocacola || flavorCatalog.cocacola[0],
+      fanta: mix.flavors?.fanta || flavorCatalog.fanta[0],
+      sprite: mix.flavors?.sprite || flavorCatalog.sprite[0],
+    });
+    setQrImage('');
+    setQrOpen(false);
     setInfo(`Editando mezcla: ${mix.recipeName}`);
     setError('');
   };
 
-  const updateRow = (index, key, value) => {
-    setRows((prevRows) => prevRows.map((row, rowIndex) => {
-      if (rowIndex !== index) {
-        return row;
-      }
+  const updatePercentage = (drinkKey, value) => {
+    setPercentages((prevPercentages) => rebalancePercentages(prevPercentages, drinkKey, value));
+  };
 
-      if (key === 'drink') {
-        const nextDrink = value;
-        const nextFlavor = flavorCatalog[nextDrink][0];
-        return {
-          ...row,
-          drink: nextDrink,
-          flavor: nextFlavor,
-        };
-      }
-
-      return {
-        ...row,
-        [key]: key === 'ml' ? Number(value) : value,
-      };
+  const updateFlavor = (drinkKey, value) => {
+    setFlavors((prevFlavors) => ({
+      ...prevFlavors,
+      [drinkKey]: value,
     }));
   };
 
-  const addRow = () => {
-    setRows((prevRows) => [...prevRows, createEmptyRow()]);
-  };
+  const buildQrPayload = () => ({
+    type: 'mezcla_bebida',
+    userId: user?.id || user?.email || user?.username || 'anonimo',
+    userEmail: user?.email || '',
+    recipeName: recipeName || 'Mezcla sin nombre',
+    percentages,
+    flavors,
+    generatedAt: new Date().toISOString(),
+  });
 
-  const removeRow = (index) => {
-    setRows((prevRows) => {
-      if (prevRows.length === 1) {
-        return prevRows;
+  const handleShowQr = async () => {
+    setError('');
+    setInfo('');
+
+    try {
+      if (totalPercentage !== 100) {
+        throw new Error('Los sliders deben sumar exactamente 100% para generar el QR');
       }
 
-      return prevRows.filter((_, rowIndex) => rowIndex !== index);
-    });
+      const qrPayload = buildQrPayload();
+      const qrText = JSON.stringify(qrPayload);
+      const qrDataUrl = await QRCode.toDataURL(qrText, {
+        width: 360,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+      });
+
+      setQrImage(qrDataUrl);
+      setQrOpen(true);
+      setInfo('QR generado con los datos de mezcla y el identificador de usuario.');
+    } catch (qrError) {
+      setError(qrError.message || 'No se pudo generar el QR');
+    }
   };
 
   const handleSave = async (event) => {
@@ -156,7 +223,8 @@ export default function MixesPage() {
       const payload = {
         recipeName,
         notes,
-        drinks: rows,
+        percentages,
+        flavors,
       };
 
       if (selectedMix) {
@@ -230,39 +298,35 @@ export default function MixesPage() {
               />
             </label>
 
-            <div className="mixes-rows">
-              {rows.map((row, index) => (
-                <div className="mixes-row" key={`${row.drink}-${index}`}>
-                  <select value={row.drink} onChange={(event) => updateRow(index, 'drink', event.target.value)}>
-                    <option value="coca-cola">Coca-Cola</option>
-                    <option value="fanta">Fanta</option>
-                    <option value="sprite">Sprite</option>
-                  </select>
-
-                  <select value={row.flavor} onChange={(event) => updateRow(index, 'flavor', event.target.value)}>
-                    {flavorCatalog[row.drink].map((flavorOption) => (
-                      <option key={flavorOption} value={flavorOption}>{flavorOption}</option>
-                    ))}
-                  </select>
-
+            <div className="mixes-sliders">
+              {drinkKeys.map((drinkKey) => (
+                <div className="mix-slider" key={drinkKey}>
+                  <div className="mix-slider-head">
+                    <strong>{drinkLabels[drinkKey]}</strong>
+                    <span>{percentages[drinkKey]}%</span>
+                  </div>
                   <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={row.ml}
-                    onChange={(event) => updateRow(index, 'ml', event.target.value)}
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={percentages[drinkKey]}
+                    onChange={(event) => updatePercentage(drinkKey, event.target.value)}
                   />
-
-                  <button type="button" onClick={() => removeRow(index)} disabled={rows.length === 1}>
-                    Quitar
-                  </button>
+                  <label>
+                    Sabor extra
+                    <select value={flavors[drinkKey]} onChange={(event) => updateFlavor(drinkKey, event.target.value)}>
+                      {flavorCatalog[drinkKey].map((flavorOption) => (
+                        <option key={flavorOption} value={flavorOption}>{flavorOption}</option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               ))}
             </div>
 
             <div className="mixes-actions-row">
-              <button type="button" className="mixes-secondary-btn" onClick={addRow}>Agregar refresco</button>
-              <span>Total: <strong>{totalMl} ml</strong></span>
+              <span>Total mezcla: <strong>{totalPercentage}%</strong></span>
+              <button type="button" className="mixes-secondary-btn" onClick={handleShowQr}>Mostrar QR</button>
             </div>
 
             {error ? <div className="mixes-alert mixes-alert-error">{error}</div> : null}
@@ -272,6 +336,16 @@ export default function MixesPage() {
               {saving ? 'Guardando...' : (selectedId ? 'Actualizar mezcla' : 'Guardar mezcla')}
             </button>
           </form>
+
+          {qrOpen && qrImage ? (
+            <div className="mixes-qr-box">
+              <h3>QR de mezcla</h3>
+              <img src={qrImage} alt="QR de mezcla" />
+              <p>
+                Incluye usuario ({user?.id || user?.email || 'sin-id'}), porcentajes y saborizantes para lectura de maquina.
+              </p>
+            </div>
+          ) : null}
         </section>
 
         <section className="mixes-card mixes-list-card">
@@ -290,15 +364,23 @@ export default function MixesPage() {
                   <h3>{mix.recipeName}</h3>
                   <button type="button" onClick={() => loadMixIntoForm(mix)}>Editar</button>
                 </div>
-                <p className="mix-item-meta">{mix.totalMl || 0} ml · Actualizada: {mix.updatedAt ? new Date(mix.updatedAt).toLocaleString() : 'sin fecha'}</p>
+                <p className="mix-item-meta">{mix.totalPercentage || 0}% · Actualizada: {mix.updatedAt ? new Date(mix.updatedAt).toLocaleString() : 'sin fecha'}</p>
                 <ul>
-                  {(mix.drinks || []).map((item, index) => (
-                    <li key={`${mix.id}-${index}`}>
-                      <strong>{drinkLabels[item.drink] || item.drink}</strong>
-                      <span>{item.flavor}</span>
-                      <em>{item.ml} ml</em>
-                    </li>
-                  ))}
+                  <li>
+                    <strong>Coca-Cola</strong>
+                    <span>{mix.flavors?.cocacola || '-'}</span>
+                    <em>{mix.percentages?.cocacola || 0}%</em>
+                  </li>
+                  <li>
+                    <strong>Fanta</strong>
+                    <span>{mix.flavors?.fanta || '-'}</span>
+                    <em>{mix.percentages?.fanta || 0}%</em>
+                  </li>
+                  <li>
+                    <strong>Sprite</strong>
+                    <span>{mix.flavors?.sprite || '-'}</span>
+                    <em>{mix.percentages?.sprite || 0}%</em>
+                  </li>
                 </ul>
                 {mix.notes ? <p className="mix-item-notes">{mix.notes}</p> : null}
               </article>
